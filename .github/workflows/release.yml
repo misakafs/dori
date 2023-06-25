@@ -1,0 +1,30 @@
+name: Release App
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+    - run: flutter pub get
+    - run: flutter build apk
+
+    - run: |
+        echo "version=$(grep 'version:' pubspec.yaml | cut -d ' ' -f 2 | sed 's/\+.*//')" >> "$GITHUB_ENV"
+
+    - run: |
+        echo "version: ${{ env.version }}"
+
+    - uses: ncipollo/release-action@v1
+      with:
+        tag: "v${{ env.version }}"
+        draft: true
+        allowUpdates: true
+        artifacts: "build/app/outputs/apk/release/app-release.apk"
+        token: ${{ secrets.TOKEN }}
